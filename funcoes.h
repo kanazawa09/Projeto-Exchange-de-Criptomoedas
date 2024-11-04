@@ -1,5 +1,5 @@
-#ifndef Investidor_h
-#define investidor_h
+#ifndef Funcoes_h
+#define funcoes_h
 
 #include <stdio.h>
 #include <string.h>
