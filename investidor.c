@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include "projeto.h"
+#include "investidor.h"
 
 
 void tracos() {
