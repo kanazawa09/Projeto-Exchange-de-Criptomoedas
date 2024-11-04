@@ -1,5 +1,5 @@
-#ifndef Projeto_h
-#define projeto_h
+#ifndef Investidor_h
+#define investidor_h
 
 #include <stdio.h>
 #include <string.h>
