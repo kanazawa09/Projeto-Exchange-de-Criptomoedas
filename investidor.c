@@ -52,7 +52,6 @@ int main() {
                 printf("\n");
             }
         }
-    }
 
     printf("Fim do Programa\n");
 
