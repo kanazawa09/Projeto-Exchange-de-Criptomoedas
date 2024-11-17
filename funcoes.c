@@ -460,3 +460,88 @@ void atualizar_cotacoes_arquivo() {
     printf("Ripple: R$ %.2lf\n", cotacoes[2]);
     tracos();
 }
+
+
+int login_adm() {
+    const char *filename = "adminfo.bin"; // Nome do arquivo binário
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return 0; // Retorna 0 em caso de erro
+    }
+
+    Admin admin;
+    char cpf_input[MAX_CPF_LENGTH];
+    char senha_input[MAX_SENHA_LENGTH];
+    int login_successful = 0;
+
+    printf("Digite seu CPF: ");
+    scanf("%s", cpf_input);
+    printf("Digite sua senha: ");
+    scanf("%s", senha_input);
+
+    // Ler o arquivo e verificar as credenciais
+    while (fread(&admin, sizeof(Admin), 1, file) == 1) {
+        if (strcmp(admin.cpf, cpf_input) == 0 && strcmp(admin.senha, senha_input) == 0) {
+            printf("Login bem-sucedido!\n");
+            login_successful = 1;
+            break;
+        }
+    }
+
+    if (!login_successful) {
+        printf("CPF ou senha incorretos.\n");
+    }
+
+    fclose(file);
+    return login_successful; // Retorna 1 se o login foi bem-sucedido, caso contrário 0
+}
+
+
+void add_investidor() {
+    const char *filename = "usuarios.bin"; // Nome do arquivo binário
+    FILE *file = fopen(filename, "ab"); // Abre o arquivo em modo de apêndice
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return;
+    }
+
+    Usuario novo_investidor;
+    novo_investidor.saldo_reais = 0.0;     // Inicializa saldo em reais
+    novo_investidor.saldo_bitcoin = 0.0;   // Inicializa saldo em Bitcoin
+    novo_investidor.saldo_ethereum = 0.0;  // Inicializa saldo em Ethereum
+    novo_investidor.saldo_ripple = 0.0;    // Inicializa saldo em Ripple
+
+    // Solicita as informações do novo investidor
+    printf("Digite o nome do investidor: ");
+    scanf(" %[^\n]", novo_investidor.nome); // Lê o nome com espaços
+    printf("Digite o CPF do investidor: ");
+    scanf("%s", novo_investidor.cpf);
+    printf("Digite a senha do investidor (número inteiro): ");
+    scanf("%d", &novo_investidor.senha);
+
+    // Gera um ID único (neste exemplo, apenas um contador simples)
+    // Para uma implementação real, você deve garantir que o ID seja único
+    fseek(file, 0, SEEK_END); // Move o ponteiro do arquivo para o final
+    novo_investidor.id = ftell(file) / sizeof(Usuario); // Gera um ID baseado no tamanho do arquivo
+
+    // Confirmação das informações
+    printf("\nConfirme as informações:\n");
+    printf("Nome: %s\n", novo_investidor.nome);
+    printf("CPF: %s\n", novo_investidor.cpf);
+    printf("Senha: %d\n", novo_investidor.senha);
+    printf("As informações estão corretas? (s/n): ");
+    
+    char confirmacao;
+    scanf(" %c", &confirmacao);
+
+    if (confirmacao == 's' || confirmacao == 'S') {
+        // Escreve os dados no arquivo
+        fwrite(&novo_investidor, sizeof(Usuario), 1, file);
+        printf("Investidor adicionado com sucesso!\n");
+    } else {
+        printf("Operação cancelada. Nenhum investidor foi adicionado.\n");
+    }
+
+    fclose(file);
+}
