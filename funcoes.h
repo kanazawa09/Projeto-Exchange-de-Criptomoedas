@@ -8,6 +8,14 @@
 
 #define MAX_TRANSACOES 100
 #define MAX_USUARIOS 10
+#define MAX_CPF_LENGTH 12
+#define MAX_SENHA_LENGTH 20
+#define MAX_NOME_LENGTH 50
+
+typedef struct {
+    char cpf[MAX_CPF_LENGTH];
+    char senha[MAX_SENHA_LENGTH];
+} Admin;
 
 typedef struct {
     char nome[50];
@@ -46,5 +54,8 @@ void salvar_usuarios(Usuario usuarios[], int quantidade);
 int carregar_usuarios(Usuario usuarios[]);
 int login(Usuario usuarios[]);
 void tracos();
+
+int login_adm();
+void add_investidor();
 
 #endif // PROJETO_H
