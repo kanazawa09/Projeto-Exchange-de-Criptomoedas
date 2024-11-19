@@ -4,7 +4,11 @@
 #include <time.h>
 #include "funcoes.h"
 
+
 int main() {
+    // Variável global para armazenar a senha do usuário logado
+    char senha_usuario[SENHA_LENGTH];
+    
     srand(time(NULL)); // Inicializa o gerador de números aleatórios
 
     // Chama a função para carregar os usuários
