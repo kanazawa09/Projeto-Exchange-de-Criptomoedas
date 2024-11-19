@@ -956,4 +956,95 @@ void consultar_saldo_admin() {
     fclose(user_file);
 }
 
+//FUNCAO CONSULTAR EXTRATO
+void consultar_extrato_admin() {
+    char cpf[CPF_LENGTH];
+    printf("Informe o CPF do investidor: ");
+    scanf("%s", cpf);
 
+    // Abrir o arquivo user_login_info.bin
+    FILE *login_info_file = fopen("user_login_info.bin", "rb");
+    if (login_info_file == NULL) {
+        printf("Erro ao abrir o arquivo de login.\n");
+        return;
+    }
+
+    int numero_usuario = -1;
+    char cpf_temp[CPF_LENGTH];
+    
+    // Ler o arquivo e buscar o número do usuario correspondente ao CPF
+    for (int i = 1; i <= MAX_USERS; i++) {
+        fread(cpf_temp, sizeof(char), CPF_LENGTH, login_info_file);
+        if (strcmp(cpf_temp, cpf) == 0) {
+            numero_usuario = i; // Encontrou o número do usuario
+            break;
+        }
+    }
+
+    fclose(login_info_file);
+
+    if (numero_usuario == -1) {
+        printf("CPF nao encontrado.\n");
+        return;
+    }
+
+    // Criar nome do arquivo com base no número do usuario
+    char arquivo_nome[20]; // Tamanho suficiente para "extratoX.bin"
+    sprintf(arquivo_nome, "extrato%d.bin", numero_usuario);
+
+    // Abrir o arquivo do extrato para leitura
+    FILE *extrato_file = fopen(arquivo_nome, "rb");
+    if (extrato_file == NULL) {
+        printf("Erro ao abrir o arquivo de extrato do investidor.\n");
+        return;
+    }
+
+    // Ler e exibir as transações do extrato
+    char data[DATA_LENGTH];
+    float valor;
+    printf("Extrato do investidor com CPF %s:\n", cpf);
+    for (int i = 0; i < MAX_TRANSACOES; i++) {
+        fread(data, sizeof(char), DATA_LENGTH, extrato_file);
+        fread(&valor, sizeof(float), 1, extrato_file);
+        if (feof(extrato_file)) break; // Fim do arquivo
+        printf("Data: %s, Valor: R$ %.2f\n", data, valor);
+    }
+
+    fclose(extrato_file);
+}
+
+
+//FUNCAO ATUALIZAR COTACAO
+void atualizar_cotacao() {
+    // Abrir o arquivo de cotações
+    FILE *file_valores = fopen("cripto_cotacao.bin", "rb+");
+    if (file_valores == NULL) {
+        perror("Erro ao abrir o arquivo de cotacoes");
+        return;
+    }
+
+    // Ler os valores atuais das criptomoedas
+    float cripto_valores[MAX_CRIPTOS];
+    fread(cripto_valores, sizeof(float), MAX_CRIPTOS, file_valores);
+
+    // Inicializar o gerador de números aleatórios
+    srand(time(NULL));
+
+    // Atualizar as cotações
+    printf("Novas cotacoes:\n");
+    for (int i = 0; i < MAX_CRIPTOS; i++) {
+        // Gerar uma variação aleatória entre -5% e +5%
+        float variacao = ((rand() % 100) / 100.0f * 10 - 5) / 100.0f; // Entre -0.05 e +0.05
+        cripto_valores[i] *= (1 + variacao); // Atualiza o valor com a variação
+
+        // Exibir a nova cotação
+        printf("Criptomoeda %d: Novo valor = R$ %.2f\n", i + 1, cripto_valores[i]);
+    }
+
+    // Voltar ao início do arquivo e escrever os novos valores
+    fseek(file_valores, 0, SEEK_SET);
+    fwrite(cripto_valores, sizeof(float), MAX_CRIPTOS, file_valores);
+
+    // Fechar o arquivo
+    fclose(file_valores);
+}
