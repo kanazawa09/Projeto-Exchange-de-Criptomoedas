@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include "funcoes.h"
+
 int main() {
     srand(time(NULL)); // Inicializa o gerador de números aleatórios
 
