@@ -1048,3 +1048,49 @@ void atualizar_cotacao() {
     // Fechar o arquivo
     fclose(file_valores);
 }
+
+//FUNCAO DISPONIBILIZA O MENU
+void menu_admin() {
+    int opcao;
+    do {
+        printf("\nMenu Principal:\n");
+        printf("Operacoes disponiveis:\n");
+        printf("1. Cadastrar Usuario\n");
+        printf("2. Excluir Usuario\n");
+        printf("3. Cadastrar Criptomoeda\n");
+        printf("4. Excluir Criptomoeda\n");
+        printf("5. Consultar Saldo\n");
+        printf("6. Consultar Extrato\n");
+        printf("7. Atualizar Cotacoes \n");
+        printf("0. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                add_user();
+                break;
+            case 2:
+                remov_user();
+                break;
+            case 3:
+                add_cripto();
+            case 4:
+                remov_cripto();
+                break;
+            case 5:
+                consultar_saldo_admin();
+            case 6:
+                consultar_extrato_admin();
+                break;
+            case 7:
+                atualizar_cotacao();
+                break;
+            case 0:
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opcao invvlida. Tente novamente.\n");
+        }
+    } while (opcao != 0);
+}
