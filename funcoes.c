@@ -5,458 +5,560 @@
 #include "funcoes.h"
 
 
-void tracos() {
-    printf("-------------------------------------------------\n");
-}
-
-void salvar_usuarios(Usuario usuarios[], int quantidade) {
-    FILE *file = fopen("usuarios.bin", "wb");
+//FUNCAO REALIZAR LOGIN
+void login_user() {
+    FILE *file = fopen("user_login_info.bin", "rb");
     if (file == NULL) {
-        perror("Erro ao abrir o arquivo para escrita");
+        perror("Erro ao abrir o arquivo de login");
         return;
     }
-    fwrite(usuarios, sizeof(Usuario), quantidade, file);
+
+    // Lê os dados do arquivo
+    while (fread(&usuarios[num_usuarios], sizeof(Usuario), 1, file) && num_usuarios < MAX_USERS) {
+        num_usuarios++;
+    }
+
     fclose(file);
 }
 
-int carregar_usuarios(Usuario usuarios[]) {
-    FILE *file = fopen("usuarios.bin", "rb");
-    if (file == NULL) {
-        perror("Erro ao abrir o arquivo para leitura");
-        return 0; // Retorna 0 se não conseguir abrir o arquivo
-    }
-    int quantidade = fread(usuarios, sizeof(Usuario), MAX_USUARIOS, file);
-    fclose(file);
-    return quantidade; // Retorna a quantidade de usuários lidos
-}
-
-int login(Usuario usuarios[]) {
-    char cpf[12];
-    int senha;
-    
-    printf("Digite o CPF: ");
-    scanf("%s", cpf);
-    printf("Digite a senha: ");
-    scanf("%d", &senha);
-
-    for (int i = 0; i < MAX_USUARIOS; i++) {
-        if (strcmp(usuarios[i].cpf, cpf) == 0 && usuarios[i].senha == senha) {
-            return i; // Retorna o índice do usuário logado
+int efetuar_login(char *cpf, char *senha) {
+    for (int i = 0; i < num_usuarios; i++) {
+        if (strcmp(usuarios[i].cpf, cpf) == 0 && strcmp(usuarios[i].senha, senha) == 0) {
+            user_logado = i; // Armazena o índice do usuário logado
+            strcpy(senha_usuario, usuarios[i].senha); // Armazena a senha do usuário logado
+            printf("Login bem-sucedido! Usuário logado: %s (Número: %d)\n", usuarios[user_logado].cpf, user_logado + 1);
+            return 1; // Login bem-sucedido
         }
     }
-    printf("CPF ou senha inválidos!\n");
-    return -1; // Retorna -1 se o login falhar
+    return 0; // Login falhou
 }
 
-Cotacao carregar_cotacoes() {
-    tracos();
-    Cotacao cotacoes;
-    FILE *arquivo_cotacao = fopen("cotacao.bin", "rb");
-    if (arquivo_cotacao == NULL) {
-        printf("Erro ao abrir o arquivo de cotacoes.\n");
-        cotacoes.valor_bitcoin = 0;
-        cotacoes.valor_ethereum = 0;
-        cotacoes.valor_ripple = 0;
-        return cotacoes;
-    }
 
-    fread(&cotacoes, sizeof(Cotacao), 1, arquivo_cotacao);
-    fclose(arquivo_cotacao);
-    tracos();
-    return cotacoes;
-}
+// FUNCAO DE SEGURANCA
+int seguranca_user() {
+    char senha_input[SENHA_LENGTH];
+    printf("Digite sua senha para continuar: ");
+    scanf("%s", senha_input);
 
-void consultar_saldo(int i, Usuario usuarios[]) {
-    tracos();
-    printf("Nome: %s\n", usuarios[i].nome);
-    printf("CPF: %s\n", usuarios[i].cpf);
-    printf("Saldo em Reais: %.2lf\n", usuarios[i].saldo_reais);
-    printf("Saldo em Bitcoin: %.2lf\n", usuarios[i].saldo_bitcoin);
-    printf("Saldo em Ethereum: %.2lf\n", usuarios[i].saldo_ethereum);
-    printf("Saldo em Ripple: %.2lf\n", usuarios[i].saldo_ripple);
-    tracos();
-}
-
-void consultar_extrato(int i) {
-    tracos();
-    FILE *arquivo_extrato;
-    Transacao extrato[MAX_TRANSACOES];
-    int contador = 0;
-
-    char nome_arquivo_extrato[50];
-    sprintf(nome_arquivo_extrato, "extrato_user%d.bin", i);
-    arquivo_extrato = fopen(nome_arquivo_extrato, "rb");
-    if (arquivo_extrato == NULL) {
-        printf("Erro ao abrir o arquivo do usuario %d.\n", i);
-        return;
-    }
-
-    while (contador < MAX_TRANSACOES && fread(&extrato[contador], sizeof(Transacao), 1, arquivo_extrato)) {
-        contador++;
-    }
-
-    fclose (arquivo_extrato);
-
-    printf("Extrato das ultimas %d transacoes:\n", contador);
-    for (int j = 0; j < contador; j++) {
-        printf("Transacao %d: %s - Valor: %.2f\n", j + 1, extrato[j].descricao, extrato[j].valor);
-    }
-
-    if (contador == 0) {
-        printf("Nenhuma transacao encontrada.\n");
-    }
-    tracos();
-}
-
-void depositar(int i, Usuario usuarios[]) {
-    tracos();
-    double valor_deposito;
-    FILE *arquivo_info_usuario = fopen("info_usuario.bin", "rb+");
-    if (arquivo_info_usuario == NULL) {
-        printf("Erro ao abrir o arquivo de informacoes do usuario.\n");
-        return;
-    }
-
-    printf("Digite o valor a ser depositado: R$ ");
-    scanf("%lf", &valor_deposito);
-
-    usuarios[i].saldo_reais += valor_deposito;
-
-    fseek(arquivo_info_usuario, i * sizeof(Usuario), SEEK_SET);
-    fwrite(&usuarios[i], sizeof(Usuario), 1, arquivo_info_usuario);
-    fclose(arquivo_info_usuario);
-
-    printf("Deposito de R$ %.2lf realizado com sucesso! Novo saldo: R$ %.2lf\n", valor_deposito, usuarios[i].saldo_reais);
-    tracos();
-}
-
-void sacar(int i, Usuario usuarios[]) {
-    tracos();
-    double valor_saque;
-    int senha_digitada;
-    FILE *arquivo_info_usuario = fopen("info_usuario.bin", "rb+");
-    if (arquivo_info_usuario == NULL) {
-        printf("Erro ao abrir o arquivo de informacoes do usuario.\n");
-        return;
-    }
-
-    printf("Digite sua senha para realizar o saque: ");
-    scanf("%d", &senha_digitada);
-
-    if (senha_digitada != usuarios[i].senha) {
-        printf("Senha incorreta. Saque nao realizado.\n");
-        fclose(arquivo_info_usuario);
-        return;
-    }
-
-    printf("Digite o valor do saque: R$ ");
-    scanf("%lf", &valor_saque);
-
-    if (valor_saque > usuarios[i].saldo_reais) {
-        printf("Saldo insuficiente. Saque nao realizado.\n");
-        fclose(arquivo_info_usuario);
-        return;
-    }
-
-    usuarios[i].saldo_reais -= valor_saque;
-
-    fseek(arquivo_info_usuario, i * sizeof(Usuario), SEEK_SET);
-    fwrite(&usuarios[i], sizeof(Usuario), 1, arquivo_info_usuario);
-    fclose(arquivo_info_usuario);
-
-    printf("Saque de R$ %.2lf realizado com sucesso! Novo saldo: R$ %.2lf\n", valor_saque, usuarios[i].saldo_reais);
-    tracos();
-}
-
-void comprar_criptomoedas(int i, Usuario usuarios[]) {
-    tracos();
-    int tipo_criptomoeda;
-    double valor_compra, valor_cripto;
-    double taxa, valor_total;
-    int senha_digitada;
-    FILE *arquivo_info_usuario;
-    FILE *arquivo_extrato;
-    Transacao transacao;
-
-    Cotacao cotacoes = carregar_cotacoes();
-
-    if (cotacoes.valor_bitcoin == 0) {
-        printf("Erro ao carregar as cotacoes. Tente novamente mais tarde.\n");
-        return;
-    }
-
-    arquivo_info_usuario = fopen("info_usuario.bin", "rb+");
-    if (arquivo_info_usuario == NULL) {
-        printf("Erro ao abrir o arquivo de informacoes do usuario.\n");
-        return;
-    }
-
-    printf("Digite sua senha: ");
-    scanf("%d", &senha_digitada);
-
-    if (senha_digitada != usuarios[i].senha) {
-        printf("Senha incorreta. Compra nao realizada.\n");
-        fclose(arquivo_info_usuario);
-        return;
-    }
-
-    printf("Escolha a criptomoeda para comprar:\n1. Bitcoin\n2. Ethereum\n3. Ripple\nSelecione: ");
-    scanf("%d", &tipo_criptomoeda);
-
-    printf("Digite o valor a ser investido: R$ ");
-    scanf("%lf", &valor_compra);
-
-    switch (tipo_criptomoeda) {
-        case 1:
-            valor_cripto = valor_compra / cotacoes.valor_bitcoin;
-            taxa = valor_compra * 0.02;
-            valor_total = valor_compra + taxa;
-            if (valor_total > usuarios[i].saldo_reais) {
-                printf("Saldo insuficiente para comprar Bitcoin.\n");
-                fclose(arquivo_info_usuario);
-                return;
-            }
-            break;
-        case 2:
-            valor_cripto = valor_compra / cotacoes.valor_ethereum;
-            taxa = valor_compra * 0.01;
-            valor_total = valor_compra + taxa;
-            if (valor_total > usuarios[i].saldo_reais) {
-                printf("Saldo insuficiente para comprar Ethereum.\n");
-                fclose(arquivo_info_usuario);
-                return;
-            }
-            break;
-        case 3:
-            valor_cripto = valor_compra / cotacoes.valor_ripple;
-            taxa = valor_compra * 0.01;
-            valor_total = valor_compra + taxa;
-            if (valor_total > usuarios[i].saldo_reais) {
-                printf("Saldo insuficiente para comprar Ripple.\n");
-                fclose(arquivo_info_usuario);
-                return;
-            }
-            break;
-        default:
-            printf("Opcao invalida. Compra nao realizada.\n");
-            fclose(arquivo_info_usuario);
-            return;
-    }
-
-    printf("Confirmar compra? (1-Sim / 0-Nao): ");
-    int confirmacao;
-    scanf("%d", &confirmacao);
-
-    if (confirmacao == 1) {
-        usuarios[i].saldo_reais -= valor_total;
-        if (tipo_criptomoeda == 1) usuarios[i].saldo_bitcoin += valor_cripto;
-        else if (tipo_criptomoeda == 2) usuarios[i].saldo_ethereum += valor_cripto;
-        else if (tipo_criptomoeda == 3) usuarios[i].saldo_ripple += valor_cripto;
-
-        fseek(arquivo_info_usuario, i * sizeof(Usuario), SEEK_SET);
-        fwrite(&usuarios[i], sizeof(Usuario), 1, arquivo_info_usuario);
-
-        char nome_arquivo_extrato[50];
-        sprintf(nome_arquivo_extrato, "extrato_user%d.bin", i);
-        arquivo_extrato = fopen(nome_arquivo_extrato, "ab");
-        if (arquivo_extrato == NULL) {
-            printf("Erro ao abrir o arquivo de extrato do usuario.\n");
-            fclose(arquivo_info_usuario);
-            return;
-        }
-
-        sprintf(transacao.descricao, "Compra de %s", tipo_criptomoeda == 1 ? "Bitcoin" : tipo_criptomoeda == 2 ? "Ethereum" : "Ripple");
-        transacao.valor = valor_compra;
-        transacao.taxa = taxa;
-        time_t now = time(NULL);
-        strftime(transacao.data, sizeof(transacao.data), "%Y-%m-%d %H:%M:%S", localtime(&now));
-
-        fwrite(&transacao, sizeof(Transacao), 1, arquivo_extrato);
-
-        fclose(arquivo_extrato);
-
-        printf("Compra realizada com sucesso! Novo saldo: R$ %.2lf\n", usuarios[i].saldo_reais);
+    // Compara a senha informada com a senha armazenada
+    if (strcmp(senha_input, senha_usuario) == 0) {
+        return 1; // Senha correta
     } else {
-        printf("Compra cancelada.\n");
+        printf("Senha incorreta. Operação cancelada.\n");
+        return 0; // Senha incorreta
     }
-    tracos();
-    fclose(arquivo_info_usuario);
 }
 
-void vender_criptomoedas(int i, Usuario usuarios[]) {
-    tracos();
-    int tipo_criptomoeda;
-    double valor_venda;
-    double taxa;
-    double valor_total;
-    int senha_digitada;
-    FILE *arquivo_info_usuario;
-    FILE *arquivo_extrato;
-    Transacao transacao;
 
-    // Carrega as cotações
-    Cotacao cotacao = carregar_cotacoes();
+//FUNCAO CONSULTAR SALDO
+void consultar_saldo() {
+    if (user_logado != -1) {
+        // Exibe o saldo em reais
+        printf("Saldo de Reais: R$ %.2f\n", usuarios[user_logado].saldo_reais);
+        
+        char cripto_nome[CRIPTO_LENGTH];
+        float cripto_valores[MAX_CRIPTOS];
 
-    // Abre o arquivo de informações do usuário
-    arquivo_info_usuario = fopen("info_usuario.bin", "rb+");
-    if (arquivo_info_usuario == NULL) {
-        printf("Erro ao abrir o arquivo de informacoes do usuario.\n");
-        return;
-    }
-
-    // Verifica a senha do usuário
-    printf("Digite sua senha para realizar a venda: ");
-    scanf("%d", &senha_digitada);
-    if (senha_digitada != usuarios[i].senha) {
-        printf("Senha incorreta. Venda nao realizada.\n");
-        fclose(arquivo_info_usuario);
-        return;
-    }
-
-    // Escolha da criptomoeda para venda
-    printf("Escolha a criptomoeda para vender:\n");
-    printf("1. Bitcoin\n");
-    printf("2. Ethereum\n");
-    printf("3. Ripple\n");
-    printf("Selecione: ");
-    scanf("%d", &tipo_criptomoeda);
-
-    // Valor da venda
-    printf("Digite o valor da criptomoeda a ser vendida: R$ ");
-    scanf("%lf", &valor_venda);
-
-    // Cálculo da venda e verificação de saldo
-    switch (tipo_criptomoeda) {
-        case 1: // Bitcoin
-            taxa = valor_venda * 0.02;
-            valor_total = valor_venda - taxa;
-            if (valor_venda / cotacao.valor_bitcoin > usuarios[i].saldo_bitcoin) {
-                printf("Saldo insuficiente para vender Bitcoin.\n");
-                fclose(arquivo_info_usuario);
-                return;
-            }
-            break;
-        case 2: // Ethereum
-            taxa = valor_venda * 0.01;
-            valor_total = valor_venda - taxa;
-            if (valor_venda / cotacao.valor_ethereum > usuarios[i].saldo_ethereum) {
-                printf("Saldo insuficiente para vender Ethereum.\n");
-                fclose(arquivo_info_usuario);
-                return;
-            }
-            break;
-        case 3: // Ripple
-            taxa = valor_venda * 0.01;
-            valor_total = valor_venda - taxa;
-            if (valor_venda / cotacao.valor_ripple > usuarios[i].saldo_ripple) {
-                printf("Saldo insuficiente para vender Ripple.\n");
-                fclose(arquivo_info_usuario);
-                return;
-            }
-            break;
-        default:
-            printf("Opcao invalida. Venda nao realizada.\n");
-            fclose(arquivo_info_usuario);
+        // Lê os nomes das criptomoedas
+        FILE *file_cripto = fopen("cripto_nome.bin", "rb");
+        if (file_cripto == NULL) {
+            perror("Erro ao abrir o arquivo de criptomoedas");
             return;
+        }
+
+        // Lê os nomes das criptomoedas
+        for (int i = 0; i < MAX_CRIPTOS; i++) {
+            fread(cripto_nome, sizeof(char), CRIPTO_LENGTH, file_cripto);
+            printf("Criptomoeda %d: %s\n", i + 1, cripto_nome);
+        }
+        fclose(file_cripto);
+
+        // Lê o valor da criptomoeda do arquivo do usuário
+        char user_file[20];
+        sprintf(user_file, "user%d.bin", user_logado + 1); // Ex: user1.bin
+        FILE *file_user = fopen(user_file, "rb");
+        if (file_user == NULL) {
+            perror("Erro ao abrir o arquivo do usuário");
+            return;
+        }
+
+        // Lê o saldo em reais e os valores das criptomoedas
+        for (int i = 0; i < MAX_CRIPTOS; i++) {
+            fread(&cripto_valores[i], sizeof(float), 1, file_user);
+            if (i == 0) {
+                // O primeiro valor é o saldo em reais, que já foi impresso
+                continue; // Pula a impressão do saldo novamente
+            } else {
+                printf("Valor da Criptomoeda %d: R$ %.2f\n", i, cripto_valores[i]);
+            }
+        }
+        fclose(file_user);
+    } else {
+        printf("Nenhum usuário logado.\n");
+    }
+}
+
+
+//FUNCAO CONSULTAR EXTRATO
+void consultar_extrato() {
+    if (user_logado != -1) {
+        // Nome do arquivo do extrato do usuário
+        char extrato_file[20];
+        sprintf(extrato_file, "extrato%d.bin", user_logado + 1); // Ex: extrato1.bin
+
+        // Abrindo o arquivo do extrato
+        FILE *file_extrato = fopen(extrato_file, "rb");
+        if (file_extrato == NULL) {
+            perror("Erro ao abrir o arquivo de extrato");
+            return;
+        }
+
+        // Lê as transações e conta quantas foram lidas
+        Transacao transacoes[MAX_TRANSACOES];
+        size_t total_transacoes = fread(transacoes, sizeof(Transacao), MAX_TRANSACOES, file_extrato);
+        fclose(file_extrato);
+
+        // Se houver menos de 100 transações, ajusta o número para exibir
+        if (total_transacoes > MAX_TRANSACOES) {
+            total_transacoes = MAX_TRANSACOES;
+        }
+
+        // Exibe as transações
+        printf("Últimas %zu transações:\n", total_transacoes);
+        for (size_t i = 0; i < total_transacoes; i++) {
+            printf("Data: %s | Valor: R$ %.2f | Taxa: R$ %.2f\n", 
+                   transacoes[i].data, transacoes[i].valor, transacoes[i].taxa);
+        }
+    } else {
+        printf("Nenhum usuário logado.\n");
+    }
+}
+
+
+//FUNCAO DEPOSITAR REAIS
+void depositar() {
+    if (user_logado != -1) {
+        // Nome do arquivo do usuário
+        char user_file[20];
+        sprintf(user_file, "user%d.bin", user_logado + 1); // Ex: user1.bin
+
+        // Abrindo o arquivo do usuário para leitura
+        FILE *file_user = fopen(user_file, "rb+"); // rb+ para leitura e escrita
+        if (file_user == NULL) {
+            perror("Erro ao abrir o arquivo do usuário");
+            return;
+        }
+
+        // Lendo o saldo atual do usuário
+        float saldo_atual;
+        fread(&saldo_atual, sizeof(float), 1, file_user);
+
+        // Solicita o valor a ser depositado
+        float valor_deposito;
+        printf("Digite o valor que deseja depositar: R$ ");
+        scanf("%f", &valor_deposito);
+
+        // Confirmação do depósito
+        printf("Você deseja depositar R$ %.2f? (s/n): ", valor_deposito);
+        char confirmacao;
+        scanf(" %c", &confirmacao); // O espaço antes de %c ignora espaços em branco
+
+        if (confirmacao == 's' || confirmacao == 'S') {
+            // Atualiza o saldo
+            saldo_atual += valor_deposito;
+
+            // Move o ponteiro do arquivo para o início para escrever o novo saldo
+            fseek(file_user, 0, SEEK_SET);
+            fwrite(&saldo_atual, sizeof(float), 1, file_user);
+
+            printf("Depósito de R$ %.2f realizado com sucesso! Novo saldo: R$ %.2f\n", valor_deposito, saldo_atual);
+        } else {
+            printf("Depósito cancelado.\n");
+        }
+
+        fclose(file_user);
+    } else {
+        printf("Nenhum usuário logado.\n");
+    }
+}
+
+
+//FUNCAO SACAR REAIS
+void sacar() {
+    if (user_logado != -1) {
+        // Nome do arquivo do usuário
+        char user_file[20];
+        sprintf(user_file, "user%d.bin", user_logado + 1); // Ex: user1.bin
+
+        // Abrindo o arquivo do usuário para leitura e escrita
+        FILE *file_user = fopen(user_file, "rb+"); // rb+ para leitura e escrita
+        if (file_user == NULL) {
+            perror("Erro ao abrir o arquivo do usuário");
+            return;
+        }
+
+        // Lendo o saldo atual do usuário
+        float saldo_atual;
+        fread(&saldo_atual, sizeof(float), 1, file_user);
+
+        // Solicita o valor a ser sacado
+        float valor_saque;
+        printf("Digite o valor que deseja sacar: R$ ");
+        scanf("%f", &valor_saque);
+
+        // Verifica se o saldo é suficiente
+        if (valor_saque > saldo_atual) {
+            printf("Saldo insuficiente. Seu saldo atual é R$ %.2f.\n", saldo_atual);
+        } else {
+            // Confirmação do saque
+            printf("Você deseja sacar R$ %.2f? (s/n): ", valor_saque);
+            char confirmacao;
+            scanf(" %c", &confirmacao); // O espaço antes de %c ignora espaços em branco
+
+            if (confirmacao == 's' || confirmacao == 'S') {
+                // Atualiza o saldo
+                saldo_atual -= valor_saque;
+
+                // Move o ponteiro do arquivo para o início para escrever o novo saldo
+                fseek(file_user, 0, SEEK_SET);
+                fwrite(&saldo_atual, sizeof(float), 1, file_user);
+
+                printf("Saque de R$ %.2f realizado com sucesso! Novo saldo: R$ %.2f\n", valor_saque, saldo_atual);
+            } else {
+                printf("Saque cancelado.\n");
+            }
+        }
+
+        fclose(file_user);
+    } else {
+        printf("Nenhum usuário logado.\n");
+    }
+}
+
+
+//FUNCAO COMPRAR CRIPTOMOEDAS
+void comprar_cripto() {
+    if (user_logado == -1) {
+        printf("Nenhum usuario logado.\n");
+        return;
     }
 
-    // Resumo da venda
-    printf("Resumo da Venda:\n");
-    printf("Criptomoeda: %s\n", tipo_criptomoeda == 1 ? "Bitcoin" : tipo_criptomoeda == 2 ? "Ethereum" : "Ripple");
-    printf("Valor da Venda: R$ %.2lf\n", valor_venda);
-    printf("Taxa: R$ %.2lf\n", taxa);
-    printf("Valor Total a ser creditado: R$ %.2lf\n", valor_total);
-    printf("Deseja confirmar a venda? (1 - Sim, 0 - Nao): ");
-    int confirmacao;
-    scanf("%d", &confirmacao);
+    // Abrindo o arquivo de cotacoes e nomes das criptomoedas
+    char cripto_nome[MAX_CRIPTOS][CRIPTO_LENGTH];
+    float cripto_valores[MAX_CRIPTOS];
 
-    if (confirmacao == 1) {
-        // Atualiza os saldos
-        usuarios[i].saldo_reais += valor_total;
+    FILE *file_nome = fopen("cripto_nome.bin", "rb");
+    FILE *file_valores = fopen("cripto_cotacao.bin", "rb");
+    if (file_nome == NULL || file_valores == NULL) {
+        perror("Erro ao abrir os arquivos de criptomoedas");
+        if (file_nome) fclose(file_nome);
+        if (file_valores) fclose(file_valores);
+        return;
+    }
 
-        switch (tipo_criptomoeda) {
+    // Lendo os nomes e valores das criptomoedas
+    for (int i = 0; i < MAX_CRIPTOS; i++) {
+        fread(cripto_nome[i], sizeof(char), CRIPTO_LENGTH, file_nome);
+        fread(&cripto_valores[i], sizeof(float), 1, file_valores);
+    }
+    fclose(file_nome);
+    fclose(file_valores);
+
+    // Exibindo as criptomoedas e suas cotacoes
+    printf("Criptomoedas disponiveis:\n");
+    for (int i = 0; i < MAX_CRIPTOS; i++) {
+        printf("%d. %s - R$ %.2f\n", i + 1, cripto_nome[i], cripto_valores[i]);
+    }
+
+    // Solicitar a escolha da criptomoeda
+    int escolha;
+    printf("Escolha a criptomoeda que deseja comprar (1-%d): ", MAX_CRIPTOS);
+    scanf("%d", &escolha);
+
+    if (escolha < 1 || escolha > MAX_CRIPTOS) {
+        printf("Escolha invalida.\n");
+        return;
+    }
+
+    // Solicitar a quantidade a ser comprada
+    float quantidade;
+    printf("Digite a quantidade de %s que deseja comprar: ", cripto_nome[escolha - 1]);
+    scanf("%f", &quantidade);
+
+    // Calcular o custo total
+    float custo_total = cripto_valores[escolha - 1] * quantidade;
+
+    // Verificar se o usuario tem saldo suficiente
+    char user_file[20];
+    sprintf(user_file, "user%d.bin", user_logado + 1);
+    FILE *file_user = fopen(user_file, "rb+");
+    if (file_user == NULL) {
+        perror("Erro ao abrir o arquivo do usuario");
+        return;
+    }
+
+    // Lendo o saldo atual do usuario
+    float saldo_atual;
+    fread(&saldo_atual, sizeof(float), 1, file_user);
+
+    if (custo_total > saldo_atual) {
+        printf("Saldo insuficiente. Seu saldo atual e R$ %.2f.\n", saldo_atual);
+        fclose(file_user);
+        return;
+    }
+
+    // Atualizando o saldo
+    saldo_atual -= custo_total;
+    fseek(file_user, 0, SEEK_SET);
+    fwrite(&saldo_atual, sizeof(float), 1, file_user);
+    fclose(file_user);
+
+    // Adicionando a transacao ao extrato
+    char extrato_file[20];
+    sprintf(extrato_file, "extrato%d.bin", user_logado + 1);
+    FILE *file_extrato = fopen(extrato_file, "ab"); // ab para adicionar no final
+    if (file_extrato == NULL) {
+        perror("Erro ao abrir o arquivo de extrato");
+        return;
+    }
+
+    // Criando a transacao
+    Transacao nova_transacao;
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(nova_transacao.data, "%02d/%02d/%04d %02d:%02d:%02d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    nova_transacao.valor = custo_total;
+    nova_transacao.taxa = custo_total * 0.02; // Exemplo de taxa de 2%
+
+    // Escrevendo a transacao no extrato
+    fwrite(&nova_transacao, sizeof(Transacao), 1, file_extrato);
+    fclose(file_extrato);
+
+    printf("Compra de %.2f %s realizada com sucesso. Custo total: R$ %.2f\n", quantidade, cripto_nome[escolha - 1], custo_total);
+}
+
+
+//FUNCAO VENDER CRIPTOMOEDAS
+void vender_cripto() {
+    if (user_logado == -1) {
+        printf("Nenhum usuario logado.\n");
+        return;
+    }
+
+    // Abrindo o arquivo de cotações e nomes das criptomoedas
+    char cripto_nome[MAX_CRIPTOS][CRIPTO_LENGTH];
+    float cripto_valores[MAX_CRIPTOS];
+
+    FILE *file_nome = fopen("cripto_nome.bin", "rb");
+    FILE *file_valores = fopen("cripto_cotacao.bin", "rb");
+    if (file_nome == NULL || file_valores == NULL) {
+        perror("Erro ao abrir os arquivos de criptomoedas");
+        if (file_nome) fclose(file_nome);
+        if (file_valores) fclose(file_valores);
+        return;
+    }
+
+    // Lendo os nomes e valores das criptomoedas
+    for (int i = 0; i < MAX_CRIPTOS; i++) {
+        fread(cripto_nome[i], sizeof(char), CRIPTO_LENGTH, file_nome);
+        fread(&cripto_valores[i], sizeof(float), 1, file_valores);
+    }
+    fclose(file_nome);
+    fclose(file_valores);
+
+    // Verificando as criptomoedas que o usuário possui
+    char user_file[20];
+    sprintf(user_file, "user%d.bin", user_logado + 1);
+    FILE *file_user = fopen(user_file, "rb");
+    if (file_user == NULL) {
+        perror("Erro ao abrir o arquivo do usuario");
+        return;
+    }
+
+    // Lendo a quantidade de cada criptomoeda na carteira do usuário
+    float carteira[MAX_CRIPTOS];
+    fread(carteira, sizeof(float), MAX_CRIPTOS, file_user);
+    fclose(file_user);
+
+    // Exibindo as criptomoedas e suas quantidades na carteira
+    printf("Criptomoedas em sua carteira:\n");
+    for (int i = 0; i < MAX_CRIPTOS; i++) {
+        if (carteira[i] > 0) {
+            printf("%d. %s - %.2f\n", i + 1, cripto_nome[i], carteira[i]);
+        }
+    }
+
+    // Solicitar a escolha da criptomoeda
+    int escolha;
+    printf("Escolha a criptomoeda que deseja vender (1-%d): ", MAX_CRIPTOS);
+    scanf("%d", &escolha);
+
+    if (escolha < 1 || escolha > MAX_CRIPTOS || carteira[escolha - 1] <= 0) {
+        printf("Escolha invalida ou voce nao possui essa criptomoeda.\n");
+        return;
+    }
+
+    // Solicitar a quantidade a ser vendida
+    float quantidade;
+    printf("Digite a quantidade de %s que deseja vender: ", cripto_nome[escolha - 1]);
+    scanf("%f", &quantidade);
+
+    // Verificar se o usuário possui a quantidade desejada
+    if (quantidade <= 0 || quantidade > carteira[escolha - 1]) {
+        printf("Quantidade invalida. Voce possui apenas %.2f %s.\n", carteira[escolha - 1], cripto_nome[escolha - 1]);
+        return;
+    }
+
+    // Calcular o valor da venda
+    float valor_venda = cripto_valores[escolha - 1] * quantidade;
+
+    // Atualizando a carteira do usuário
+    carteira[escolha - 1] -= quantidade;
+
+    // Atualizando o saldo do usuário
+    char user_file_update[20];
+    sprintf(user_file_update, "user%d.bin", user_logado + 1);
+    file_user = fopen(user_file_update, "rb+");
+    if (file_user == NULL) {
+        perror("Erro ao abrir o arquivo do usuario");
+        return;
+    }
+
+    float saldo_atual;
+    fread(&saldo_atual, sizeof(float), 1, file_user);
+    saldo_atual += valor_venda; // Adicionando o valor da venda ao saldo
+    fseek(file_user, 0, SEEK_SET);
+    fwrite(&saldo_atual, sizeof(float), 1, file_user);
+    fclose(file_user);
+
+    // Atualizando a carteira no arquivo do usuário
+    file_user = fopen(user_file_update, "wb");
+    if (file_user == NULL) {
+        perror("Erro ao abrir o arquivo do usuario");
+        return;
+    }
+    fwrite(carteira, sizeof(float), MAX_CRIPTOS, file_user);
+    fclose(file_user);
+
+    // Adicionando a transacao ao extrato
+    char extrato_file[20];
+    sprintf(extrato_file, "extrato%d.bin", user_logado + 1);
+    FILE *file_extrato = fopen(extrato_file, "ab"); // ab para adicionar no final
+    if (file_extrato == NULL) {
+        perror("Erro ao abrir o arquivo de extrato");
+        return;
+    }
+
+    // Criando a transacao
+    Transacao nova_transacao;
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    sprintf(nova_transacao.data, "%02d/%02d/%04d %02d:%02d:%02d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+    nova_transacao.valor = valor_venda;
+    nova_transacao.taxa = valor_venda * 0.02; // Exemplo de taxa de 2%
+
+    // Escrevendo a transacao no extrato
+    fwrite(&nova_transacao, sizeof(Transacao), 1, file_extrato);
+    fclose(file_extrato);
+
+    printf("Venda de %.2f %s realizada com sucesso. Valor total: R$ %.2f\n", quantidade, cripto_nome[escolha - 1], valor_venda);
+}
+
+
+//FUNCAO ATUALIZAR COTACAO
+void atualizar_cotacao() {
+    // Abrir o arquivo de cotações
+    FILE *file_valores = fopen("cripto_cotacao.bin", "rb+");
+    if (file_valores == NULL) {
+        perror("Erro ao abrir o arquivo de cotacoes");
+        return;
+    }
+
+    // Ler os valores atuais das criptomoedas
+    float cripto_valores[MAX_CRIPTOS];
+    fread(cripto_valores, sizeof(float), MAX_CRIPTOS, file_valores);
+
+    // Inicializar o gerador de números aleatórios
+    srand(time(NULL));
+
+    // Atualizar as cotações
+    printf("Novas cotacoes:\n");
+    for (int i = 0; i < MAX_CRIPTOS; i++) {
+        // Gerar uma variação aleatória entre -5% e +5%
+        float variacao = ((rand() % 100) / 100.0f * 10 - 5) / 100.0f; // Entre -0.05 e +0.05
+        cripto_valores[i] *= (1 + variacao); // Atualiza o valor com a variação
+
+        // Exibir a nova cotação
+        printf("Criptomoeda %d: Novo valor = R$ %.2f\n", i + 1, cripto_valores[i]);
+    }
+
+    // Voltar ao início do arquivo e escrever os novos valores
+    fseek(file_valores, 0, SEEK_SET);
+    fwrite(cripto_valores, sizeof(float), MAX_CRIPTOS, file_valores);
+
+    // Fechar o arquivo
+    fclose(file_valores);
+}
+
+
+//FUNCAO DISPONIBILIZA O MENU
+void menu_principal() {
+    int opcao;
+    do {
+        printf("\nMenu Principal:\n");
+        printf("Operações disponíveis:\n");
+        printf("1. Consultar Saldo\n");
+        printf("2. Consultar Extrato\n");
+        printf("3. Depositar Reais\n");
+        printf("4. Sacar Reais\n");
+        printf("5. Comprar Criptomoedas\n");
+        printf("6. Vender Criptomoedas \n");
+        printf("7. Atualizar Cotacoes \n");
+        printf("0. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
             case 1:
-                usuarios[i].saldo_bitcoin -= valor_venda / cotacao.valor_bitcoin;
-                strcpy(transacao.descricao, "Venda de Bitcoin");
+                if (seguranca_user()) {
+                    consultar_saldo();
+                }
                 break;
             case 2:
-                usuarios[i].saldo_ethereum -= valor_venda / cotacao.valor_ethereum;
-                strcpy(transacao.descricao, "Venda de Ethereum");
+                if (seguranca_user()) {
+                    consultar_extrato();
+                }
                 break;
             case 3:
-                usuarios[i].saldo_ripple -= valor_venda / cotacao.valor_ripple;
-                strcpy(transacao.descricao, "Venda de Ripple");
+                if (seguranca_user()) {
+                    depositar();
+                }
                 break;
+            case 4:
+                if (seguranca_user()) {
+                    sacar();
+                }
+                break;
+            case 5:
+                if (seguranca_user()) {
+                    comprar_cripto();
+                }
+                break;
+            case 6:
+                if (seguranca_user()) {
+                    vender_cripto();
+                }
+                break;
+            case 7:
+                if (seguranca_user()) {
+                    atualizar_cotacao();
+                }
+                break;
+            case 0:
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opção inválida. Tente novamente.\n");
         }
-
-        // Registra a transação
-        transacao.valor = valor_total; // Armazena o valor total recebido
-        transacao.taxa = taxa;
-        time_t now = time(NULL);
-        strftime(transacao.data, sizeof(transacao.data), "%Y-%m-%d %H:%M:%S", localtime(&now));
-
-        // Salva as informações do usuário
-        fseek(arquivo_info_usuario, i * sizeof(Usuario), SEEK_SET);
-        fwrite(&usuarios[i], sizeof(Usuario), 1, arquivo_info_usuario);
-
-        // Abre o arquivo de extrato
-        char nome_arquivo_extrato[50];
-        sprintf(nome_arquivo_extrato, "extrato_user%d.bin", i);
-        arquivo_extrato = fopen(nome_arquivo_extrato, "ab");
-        if (arquivo_extrato == NULL) {
-            printf("Erro ao abrir o arquivo de extrato do usuario.\n");
-            fclose(arquivo_info_usuario);
-            return;
-        }
-
-        fwrite(&transacao, sizeof(Transacao), 1, arquivo_extrato);
-        fclose(arquivo_extrato);
-
-        printf("Venda realizada com sucesso! Novo saldo em Reais: R$ %.2lf\n", usuarios[i].saldo_reais);
-    } else {
-        printf("Venda cancelada.\n");
-    }
-    tracos();
-    fclose(arquivo_info_usuario);
-}
-
-double atualizar_cotacao(double cotacao_atual) {
-    tracos();
-    double fator = ((rand() % 101) / 100.0) - 0.05;
-    double nova_cotacao = cotacao_atual * (1 + fator);
-
-    if (nova_cotacao < 0) {
-        nova_cotacao = 0;
-    }
-    tracos();
-    return nova_cotacao;
-}
-
-void atualizar_cotacoes_arquivo() {
-    tracos();
-    FILE *arquivo_cotacao;
-    double cotacoes[3];
-
-    arquivo_cotacao = fopen("cotacao.bin", "rb+");
-    if (arquivo_cotacao == NULL) {
-        printf("Erro ao abrir o arquivo cotacao.bin.\n");
-        return;
-    }
-
-    fread(cotacoes, sizeof(double), 3, arquivo_cotacao);
-
-    cotacoes[0] = atualizar_cotacao(cotacoes[0]);
-    cotacoes[1] = atualizar_cotacao(cotacoes[1]);
-    cotacoes[2] = atualizar_cotacao(cotacoes[2]);
-
-    fseek(arquivo_cotacao, 0, SEEK_SET);
-    fwrite(cotacoes, sizeof(double), 3, arquivo_cotacao);
-
-    fclose(arquivo_cotacao);
-
-    printf("Cotacoes Atualizadas:\n");
-    printf("Bitcoin: R$ %.2lf\n", cotacoes[0]);
-    printf("Ethereum: R$ %.2lf\n", cotacoes[1]);
-    printf("Ripple: R$ %.2lf\n", cotacoes[2]);
-    tracos();
+    } while (opcao != 0);
 }
