@@ -7,6 +7,7 @@
 #include <time.h>
 
 #define MAX_USERS 10
+#define MAX_ADMIN 1
 #define CPF_LENGTH 12
 #define SENHA_LENGTH 5          // 4 dígitos + 1 para o terminador nulo
 #define MAX_TRANSACOES 100      // Definindo o número máximo de transações a serem exibidas
