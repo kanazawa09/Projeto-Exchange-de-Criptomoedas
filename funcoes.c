@@ -562,3 +562,398 @@ void menu_principal() {
         }
     } while (opcao != 0);
 }
+
+
+
+
+
+// FUNCOES ADMIN  
+
+
+// Renomeie a variável para evitar conflito
+Usuario usuarios_list[MAX_USERS]; // Mudado para 'usuarios_list'
+int num_usuarios = 0;
+
+Admin admins[MAX_ADMIN]; // Renomeado para evitar conflito
+int num_admin = 0;
+int admin_logado = -1; // Índice do administrador logado, -1 indica que ninguém está logado
+
+// Prototipagem da função login_admin
+int login_admin(char *cpf, char *senha);
+
+
+//FUNCAO REALIZAR LOGIN
+void interface_login() {
+    char cpf[12];
+    char senha[5];
+
+    printf("Informe seu CPF: ");
+    scanf("%11s", cpf); // Limita a 11 caracteres
+    printf("Informe sua senha: ");
+    scanf("%4s", senha); // Limita a 4 caracteres
+
+    if (login_admin(cpf, senha)) {
+        printf("Login bem-sucedido!\n");
+        return 1;
+        // Continue com a lógica do sistema
+    } else {
+        printf("CPF ou senha invalidos. Tente novamente.\n");
+        return 0;
+    }
+}
+
+int login_admin(char *cpf, char *senha) {
+    Admin admin;
+    FILE *file = fopen("admin_login_info.bin", "rb");
+    if (file == NULL) {
+        perror("Erro ao abrir o arquivo de login");
+        return 0; // Falha ao abrir o arquivo
+    }
+
+    while (fread(&admin, sizeof(Admin), 1, file)) {
+        if (strcmp(admin.cpf, cpf) == 0 && strcmp(admin.senha, senha) == 0) {
+            fclose(file);
+            return 1; // Login bem-sucedido
+        }
+    }
+
+    fclose(file);
+    return 0; // Login falhou
+}
+
+
+//FUNCAO ADICIONAR USUARIO
+void add_user() {
+    // Verifica se há espaço para novos usuários
+    if (num_admin >= MAX_USERS) {
+        printf("Número máximo de usuários atingido.\n");
+        return;
+    }
+
+    // Encontra um arquivo vazio para o novo usuario
+    char filename[20];
+    int usuario_num = -1;
+    for (int i = 0; i < MAX_USERS; i++) {
+        snprintf(filename, sizeof(filename), "user%d.bin", i);
+        FILE *file = fopen(filename, "rb");
+        if (file == NULL) {
+            // O arquivo nao existe, então podemos usá-lo
+            usuario_num = i;
+            break;
+        }
+        fclose(file);
+    }
+
+    if (usuario_num == -1) {
+        printf("Numero maximo de usuarios atingido.\n");
+        return;
+    }
+
+    // Solicita informações do novo usuario
+    Usuario novo_usuario; // Estrutura para o novo usuario
+    char nome[50]; // Variável para armazenar o nome
+    printf("Informe o nome do novo usuario: ");
+    scanf("%s", nome); // Coleta o nome, mas nao armazena em arquivo
+    printf("Informe o CPF do novo usuario: ");
+    scanf("%s", novo_usuario.cpf);
+    printf("Informe a senha do novo usuario (4 dígitos): ");
+    scanf("%s", novo_usuario.senha);
+
+    // Exibe as informações para confirmação
+    printf("\nConfirme as informações do novo usuario:\n");
+    printf("Nome: %s\n", nome);
+    printf("CPF: %s\n", novo_usuario.cpf);
+    printf("Senha: %s\n", novo_usuario.senha);
+    printf("Deseja confirmar? (s/n): ");
+    char confirm;
+    scanf(" %c", &confirm); // Lê a confirmação
+
+    if (confirm == 's' || confirm == 'S') {
+        // Adiciona o CPF e a senha ao arquivo de login
+        FILE *login_file = fopen("user_login_info.bin", "ab");
+        if (login_file == NULL) {
+            perror("Erro ao abrir o arquivo de login");
+            return;
+        }
+        fwrite(&novo_usuario, sizeof(Usuario), 1, login_file);
+        fclose(login_file);
+
+        // Atualiza o número de usuários
+        num_usuarios++;
+        printf("Usuario adicionado com sucesso!\n");
+    } else {
+        printf("Cadastro do usuario cancelado.\n");
+    }
+}
+
+void remov_user() {
+    char cpf[CPF_LENGTH];
+    printf("Informe o CPF do usuario a ser removido: ");
+    scanf("%s", cpf);
+
+    // Busca o usuario no arquivo de login
+    Usuario usuario_encontrado; // Mude para Usuario
+    int usuario_index = -1;
+    FILE *login_file = fopen("user_login_info.bin", "rb+");
+    if (login_file == NULL) {
+        perror("Erro ao abrir o arquivo de login");
+        return;
+    }
+
+    // Lê os dados do arquivo e procura o CPF
+    while (fread(&usuario_encontrado, sizeof(Usuario), 1, login_file)) { // Mude para Usuario
+        if (strcmp(usuario_encontrado.cpf, cpf) == 0) {
+            usuario_index = ftell(login_file) / sizeof(Usuario) - 1; // Índice do usuario encontrado
+            break;
+        }
+    }
+
+    if (usuario_index == -1) {
+        printf("Usuario com CPF %s nao encontrado.\n", cpf);
+        fclose(login_file);
+        return;
+    }
+
+    // Exibe os dados do usuario encontrado
+    printf("Usuario encontrado:\n");
+    printf("CPF: %s\n", usuario_encontrado.cpf);
+    printf("Senha: %s\n", usuario_encontrado.senha);
+    printf("Saldo: %.2f\n", usuario_encontrado.saldo_reais); // Agora correto
+    printf("Deseja confirmar a exclusao? (1 - Sim, 0 - Nao): ");
+    int confirmar;
+    scanf("%d", &confirmar);
+
+    if (confirmar != 1) {
+        printf("Operacao cancelada.\n");
+        fclose(login_file);
+        return;
+    }
+
+    // Remover o usuario do arquivo de login
+    // Para isso, vamos criar um novo arquivo temporário
+    FILE *temp_file = fopen("temp_user_login_info.bin", "wb");
+    if (temp_file == NULL) {
+        perror("Erro ao criar arquivo temporário");
+        fclose(login_file);
+        return;
+    }
+
+    // Copia todos os usuários, exceto o que será removido
+    fseek(login_file, 0, SEEK_SET);
+    while (fread(&usuario_encontrado, sizeof(Usuario), 1, login_file)) {
+        if (strcmp(usuario_encontrado.cpf, cpf) != 0) {
+            fwrite(&usuario_encontrado, sizeof(Usuario), 1, temp_file);
+        }
+    }
+
+    fclose(login_file);
+    fclose(temp_file);
+
+    // Substitui o arquivo original pelo temporário
+    remove("user_login_info.bin");
+    rename("temp_user_login_info.bin", "user_login_info.bin");
+
+    // Limpa o arquivo do usuario correspondente
+    char filename[20];
+    snprintf(filename, sizeof(filename), "user%d.bin", usuario_index);
+    remove(filename); // Remove o arquivo do usuario
+
+    printf("Usuario com CPF %s removido com sucesso!\n", cpf);
+}
+
+
+//FUNCAO ADICIONAR CRITOMOEDA
+void add_cripto() {
+    char nome[CRIPTO_LENGTH];
+    char cotacao[CRIPTO_LENGTH]; // Usando o mesmo tamanho para a cotação
+
+    // Coletar dados do usuario
+    printf("Informe o nome da nova criptomoeda: ");
+    scanf("%s", nome);
+    printf("Informe a cotacao inicial da nova criptomoeda: ");
+    scanf("%s", cotacao);
+
+    // Abrir arquivos em modo append
+    FILE *nome_file = fopen("cripto_nome.bin", "ab");
+    FILE *cotacao_file = fopen("cripto_cotacao.bin", "ab");
+
+    if (nome_file == NULL || cotacao_file == NULL) {
+        perror("Erro ao abrir os arquivos");
+        return;
+    }
+
+    // Escrever dados nos arquivos
+    fwrite(nome, sizeof(char), strlen(nome) + 1, nome_file); // +1 para incluir o caractere nulo
+    fwrite(cotacao, sizeof(char), strlen(cotacao) + 1, cotacao_file); // +1 para incluir o caractere nulo
+
+    // Fechar arquivos
+    fclose(nome_file);
+    fclose(cotacao_file);
+
+    printf("Criptomoeda %s adicionada com cotacao inicial %s com sucesso!\n", nome, cotacao);
+}
+
+
+//FUNCAO REMOVER CRITOMOEDA
+void remov_cripto() {
+    char nome[CRIPTO_LENGTH];
+    printf("Informe o nome da criptomoeda a ser removida: ");
+    scanf("%s", nome);
+
+    // Abrir arquivos para leitura
+    FILE *nome_file = fopen("cripto_nome.bin", "rb");
+    FILE *cotacao_file = fopen("cripto_cotacao.bin", "rb");
+
+    if (nome_file == NULL || cotacao_file == NULL) {
+        perror("Erro ao abrir os arquivos");
+        return;
+    }
+
+    char nome_atual[CRIPTO_LENGTH];
+    char cotacao_atual[CRIPTO_LENGTH];
+    int encontrado = 0;
+
+    // Busca a criptomoeda no arquivo de nomes
+    while (fread(nome_atual, sizeof(char), CRIPTO_LENGTH, nome_file)) {
+        fread(cotacao_atual, sizeof(char), CRIPTO_LENGTH, cotacao_file); // Lê a cotação correspondente
+
+        if (strcmp(nome_atual, nome) == 0) {
+            encontrado = 1;
+            break; // Criptomoeda encontrada
+        }
+    }
+
+    if (!encontrado) {
+        printf("Criptomoeda com nome %s nao encontrada.\n", nome);
+        fclose(nome_file);
+        fclose(cotacao_file);
+        return;
+    }
+
+    // Exibe os dados da criptomoeda encontrada
+    printf("Criptomoeda encontrada:\n");
+    printf("Nome: %s\n", nome_atual);
+    printf("Cotação: %s\n", cotacao_atual);
+    printf("Deseja confirmar a exclusao? (1 - Sim, 0 - Nao): ");
+    int confirmar;
+    scanf("%d", &confirmar);
+
+    if (confirmar != 1) {
+        printf("Operacao cancelada.\n");
+        fclose(nome_file);
+        fclose(cotacao_file);
+        return;
+    }
+
+    // Remover a criptomoeda dos arquivos
+    // Criar arquivos temporários
+    FILE *temp_nome_file = fopen("temp_cripto_nome.bin", "wb");
+    FILE *temp_cotacao_file = fopen("temp_cripto_cotacao.bin", "wb");
+
+    if (temp_nome_file == NULL || temp_cotacao_file == NULL) {
+        perror("Erro ao criar arquivos temporários");
+        fclose(nome_file);
+        fclose(cotacao_file);
+        return;
+    }
+
+    // Copia todos os dados, exceto a criptomoeda que será removida
+    fseek(nome_file, 0, SEEK_SET);
+    fseek(cotacao_file, 0, SEEK_SET);
+    while (fread(nome_atual, sizeof(char), CRIPTO_LENGTH, nome_file)) {
+        fread(cotacao_atual, sizeof(char), CRIPTO_LENGTH, cotacao_file);
+        if (strcmp(nome_atual, nome) != 0) {
+            fwrite(nome_atual, sizeof(char), CRIPTO_LENGTH, temp_nome_file);
+            fwrite(cotacao_atual, sizeof(char), CRIPTO_LENGTH, temp_cotacao_file);
+        }
+    }
+
+    // Fechar arquivos
+    fclose(nome_file);
+    fclose(cotacao_file);
+    fclose(temp_nome_file);
+    fclose(temp_cotacao_file);
+
+    // Substituir os arquivos originais pelos temporários
+    remove("cripto_nome.bin");
+    rename("temp_cripto_nome.bin", "cripto_nome.bin");
+    remove("cripto_cotacao.bin");
+    rename("temp_cripto_cotacao.bin", "cripto_cotacao.bin");
+
+    printf("Criptomoeda %s removida com sucesso!\n", nome);
+}
+
+
+void consultar_saldo_admin() {
+    char cpf[CPF_LENGTH];
+    printf("Informe o CPF do investidor: ");
+    scanf("%s", cpf);
+
+    // Abrir o arquivo user_login_info.bin
+    FILE *login_info_file = fopen("user_login_info.bin", "rb");
+    if (login_info_file == NULL) {
+        printf("Erro ao abrir o arquivo de login.\n");
+        return;
+    }
+
+    int numero_usuario = -1;
+    char cpf_temp[CPF_LENGTH];
+    
+    // Ler o arquivo e buscar o número do usuario correspondente ao CPF
+    for (int i = 1; i <= MAX_USERS; i++) {
+        fread(cpf_temp, sizeof(char), CPF_LENGTH, login_info_file);
+        if (strcmp(cpf_temp, cpf) == 0) {
+            numero_usuario = i; // Encontrou o número do usuario
+            break;
+        }
+    }
+
+    fclose(login_info_file);
+
+    if (numero_usuario == -1) {
+        printf("CPF nao encontrado.\n");
+        return;
+    }
+
+    // Criar nome do arquivo com base no número do usuario
+    char arquivo_nome[20]; // Tamanho suficiente para "userX.bin"
+    sprintf(arquivo_nome, "user%d.bin", numero_usuario);
+
+    // Abrir o arquivo do usuario para leitura
+    FILE *user_file = fopen(arquivo_nome, "rb");
+    if (user_file == NULL) {
+        printf("Erro ao abrir o arquivo do investidor.\n");
+        return;
+    }
+
+    // Ler o saldo em reais
+    float saldo_reais;
+    fread(&saldo_reais, sizeof(float), 1, user_file);
+    printf("Saldo em Reais do investidor com CPF %s: R$ %.2f\n", cpf, saldo_reais);
+
+    // Ler as quantidades de criptomoedas
+    float quantidades[MAX_CRIPTOS]; // Alterado de MAX_CRIPTOMOEDAS para MAX_CRIPTOS
+    fread(quantidades, sizeof(float), MAX_CRIPTOS, user_file);
+
+    // Abrir o arquivo cripto_nome.bin para ler os nomes das criptomoedas
+    FILE *cripto_nome_file = fopen("cripto_nome.bin", "rb");
+    if (cripto_nome_file == NULL) {
+        printf("Erro ao abrir o arquivo de nomes das criptomoedas.\n");
+        fclose(user_file);
+        return;
+    }
+
+    // Ler e exibir os nomes das criptomoedas
+    char nome_cripto[DATA_LENGTH];
+    printf("Quantidades de criptomoedas:\n");
+    for (int i = 0; i < MAX_CRIPTOS; i++) {
+        fread(nome_cripto, sizeof(char), DATA_LENGTH, cripto_nome_file);
+        if (feof(cripto_nome_file)) break; // Fim do arquivo
+        printf("%s: %.2f\n", nome_cripto, quantidades[i]);
+    }
+
+    fclose(cripto_nome_file);
+    fclose(user_file);
+}
+
+
