@@ -2,6 +2,7 @@
 Projeto 3 da Exchange de Criptomoedas
 
 Participantes e Matrícula: 
+
 RODRIGO INOUE CASTANHO 	 | RA: 24.124.037-3
 
 Igor Eizo Ramos Kanazawa | RA: 24.124.040-7 
