@@ -1,37 +1,40 @@
-# Projeto-1-Exchange-de-Criptomoedas
-Projeto 1 da Exchange de Criptomoedas
+# Projeto-Exchange-de-Criptomoedas
+Projeto 3 da Exchange de Criptomoedas
 
-Projeto-1---Exchange-de-Criptomoeda
-Participantes e Matrícula: Igor Eizo Ramos Kanazawa | RA: 24.124.040-7 
+Participantes e Matrícula: 
+RODRIGO INOUE CASTANHO 	 | RA: 24.124.037-3
+Igor Eizo Ramos Kanazawa | RA: 24.124.040-7 
 Wilson Massaiolli Chacon | RA: 24.124.038-1 
-RODRIGO INOUE CASTANHO | RA: 24.124.037-3
+
 ==========================================================================================================================================================
 
-Usuários disponíveis para o uso (somente dá pra acessar o banco com esses usuários)
+Informacoes de login dos Investidores
+             CPF	 SENHA	SALDO Reais
+        {"12345678901", "1234", 1000.0},
+        {"23456789012", "2345", 1500.0},
+        {"34567890123", "3456", 2000.0},
+        {"45678901234", "4567", 2500.0},
+        {"56789012345", "5678", 3000.0},
+        {"67890123456", "6789", 3500.0},
+        {"78901234567", "7890", 4000.0},
+        {"89012345678", "8901", 4500.0},
+        {"90123456789", "9012", 5000.0},
+        {"01234567890", "0123", 5500.0}
 
---------------------------------------------------------------------------
-{"Wilson", 1234, 1, "12345678901", 1000.00, 0.0, 0.0, 0.0}
-{"Igor", 5678,   2, "23456789012", 2000.00, 0.0, 0.0, 0.0}
-{"Rodrigo", 9101, 3, "34567890123", 1500.00, 0.0, 0.0, 0.0}
 
-{nome}, {senha}, {id}, {cpf}, {reais}, {bitcoins}, {Etherium}, {ripple}
---------------------------------------------------------------------------
-
-
-
-
-
+Informacoes de login do ADIMINISTRADOR
+             CPF	 SENHA
+	  {"12345678901", "1234"}
 
 ---------------------------------------------------------------------------------------------------------------
 Desenvolvimento de algorítmos [Projeto C]
 
 OBJETIVO:
 
-O Objetivo do projeto é criar um banco de criptmoedas em linguagem C, onde há a presença de três moedas: Bitcoin, Ethereum, Ripple. Neste banco o usuário precisa realizar o cadastro informando: Nome, Senha, CPF, para conseguir acessar o banco.
+Este projeto possui dois programas uma para os investidoress chamado inovestidor.c e um para o administrador chamado admin.c
 
-Dentro do banco, o usuário tem a seguintes opções para realizar:
-
-Sacar -Depositar -consultar o saldo -consultar extrato -comprar criptomoedas -carregar cotações -atualizar cotação -vender criptomoedas -main menu
+ - O programa do investidor faz uso de 5 arquivos binarios, uma para o saldo do investidor, um para o extrato do investidor, um para realizar o login do investidor, e dois para armazenar o nome das criptomoedas e suas cotacoes respectivamente.
+ - O programa do administrador possui um arquivo exclusivo para realizar o login do administrador e a capacidade de manipular toddos os demais arquivos binarios, seja editar as informacoes dos usuarios ou criptomoedas.
 
 		
 =====================================================================================================
@@ -43,31 +46,30 @@ FORMA DE COMPILAÇÃO E EXECUÇÃO
 
 ======================================================================================================
 
-FORMA DE USAR:
+FORMA DE USAR O PROGRAMA DO INVESTIDOR:
 
-1- O usuário preenche os campos pendentes:(Nome, Senha, CPF)
+1- Ao iniciar o programa a funcao login_user() sera iniciada. Nela o usuário deve informar seu CPF e SENHA de 4 digitos numericos. Se estaas informacoes existirem no arquivo user_login_info.bin o programa retorna um valor positivo disponibilizando o menu.
 
-2- o usuário tem o acesso liberado para utilizar sua conta no banco de criptmoedas.
+2- Se o login for realizado com sucesso a funcao menu_principal() sera chamada, disponibilizando o menu com todas as operacoes possiveis ao inveestidor.
 
-3- o usuario digita o número que é associado à opção na qual ele deseja (no main-menu)
+3- Quando qualquer operacao for chamada a funcao seguranca_user() sera iniciada. nela o usuario deve novamnete informar sua senha para proseguir a operacao.
 
-4- Funcionalidade das opções. a) sacar O programa solicita a senha do usuario para realizar o saque, assim que a senha é inserida e validada, o usuário pode digitar o valor do saque: ("Digite o valor do saque: R$ "). Escolha a quantia que deseja e dê enter para confirmar.
+4- TODAS OPERACOES:
+a) consultar_saldo(). Esta funcao ira abrir e ler o arquivo do que contem o saldo do investidor logado e entao imprime no console quantos reais e criptomoedas ele possui.
 
-b) depositar O programa pergunta o valor que o usuário quer colocar para depositar: ("Digite o valor a ser depositado: R$ "), Escolha a quantia que desejar e dê enter para confirmar.
+b) consultar_extrato().Esta funcao ira abrir e ler o arquivo do que contem o extrato do investidor logado e entao imprime no console as ultimas 100 transacoes deste investidor, contendo horario, valor e taxa.
 
-c) consultar extrato O programa vai buscar e mostrar ao usuário o extrato das ultimas transações feitas pelo mesmo.
+c) depositar(). Esta funcao permite ao usuario depositar reais em sua conta, apos confirmar a operacao o valor desejado sera adicionado as seu  saldo.
 
-d) comprar criptomoedas O programa vai solicitar a senha do usuário para realizar a compra, e então, buscar e mostar as cotações ao usuário, uma vez que estiver disponivel a compra, o programa mostrará as moedas disponíveis para comprar (Bitcoin, Ethereum, Ripple), então o usuário digita o valor que ele vai gastar para comprar ("Digite o valor a ser investido: R$ "). Caso o valor seja menor do que o valor da moeda representa, será mostrado ao usuário uma mensagem dizendo que ele não pode comprar devido ao saldo insuficiente:("Saldo insuficiente para comprar Bitcoin"), caso o usuário gaste a quantia suificente, o programa irá perguntar se o usuário quer confirmar a compra, e então se o usuário optar por confirmar esta compra, a moeda será comprada.
+d) sacar(). Esta funcao permite ao usuario sacar reais em sua conta, apos confirmar a operacao o valor desejado sera removido as seu saldo, nao permitindo o saldo ficar negativo.
 
-e) carregar cotações O programa vai abrir as cotações e mostrar o valor das respectivas moedas:(Bitcoin, Ethereum, Ripple).
+e) comprar_cripto(). Esta funcao permite o usuario compraar criptomoedas. Ela funcionao ao abrir e ler os arquivos que contem o nome e cotacao destas criptomoedas, ele entao exibe estas informacoes ao usuario e apos ele selecionar qual criptomoeda e o valor que ele deseja comprar o arquivo de saldo do usuario é aberto para realizar a operacao, removendo o valor de reais e adicionando o numero de criptomoedas. Se o saldo de reais for insuficiente a operacao é cancelada. No final de tudo a operacao é registrada no extrato do usuaario.
 
-f)atualizar cotação O Programa vai buscar as cotações e irá mostrar ao usuário as cotações atualizadas das moedas:(Bitcoin, Ethereum, Ripple).
+f) vender_cripto(). Esta funcao permite o usuario vender criptomoedas. Ela funcionao ao abrir e ler os arquivos que contem o saldo do usuario e o arquivo com nome e cotacoes das criptomoedas, ele entao exibe estas informacoes ao usuario e apos ele selecionar qual criptomoeda e o valor que ele deseja vender a operacao é realizada, removendo o valor da critomoeda selecionada e adicionando o valor em reais. Se o saldo de criptomoedas selecionaada for insuficiente a operacao é cancelada. No final de tudo a operacao é registrada no extrato do usuaario.
 
-g) consultar saldo O programa vai exibir as informações(Nome, CPF) e a quantia das moedas:(Reais, Bitcoin, Ethereum, Ripple) que o usuário possui.
+g) atualizar_cotacao(). Esta funcao permite ao usuario atualizar a cotacao das criptomoedas, almentando ou diminuindo suas cotacoes em no maximo ou minimo 5%. Ela funcona ao abrir os aarquivos com nome e cotacoes daas criptomoedas, gerando um valor novo pra cada criptomoeda e exibindo estas novas cotacoes ao usuario antes de salvar as novas cotacoes nos aarquivos binarios.
 
-h) menu main O programa irá retornar ao menu principal, em que o usuário terá de informar seu CPF e Senha, para acessar o menu principal.
 
-i) vender criptomoedas O programa vai solicitar a senha do usuário, uma vez que estiver correta, o programa vai pedir a criptomoeda em que o usuário quer vender, o usuário escolhe a moeda desejada para a venda(Bitcoin, Ethereum, Ripple), e digita o valor que a criptomoeda vai ser vendida ("Digite o valor da criptomoeda a ser vendida: R$ "), se o usuário não tiver saldo o suficiente para realiza a venda, o programa dirá: ("Saldo insuficiente para vender (moeda)"), caso o usuário tenha o saldo suficiente para vender, o programa exibirá um resumo da venda, mostrando: A Criptomoeda escolhida, O valor da venda, a taxa que é cobrada na realização da venda, o valor total a ser creditado, e enfim, o programa vai pedir uma confirmação da venda. Quando o requisito for confirmado, estará confirmado a realização da venda.
 
 ===========================================================================================================================
 
