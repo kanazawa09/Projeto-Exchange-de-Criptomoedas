@@ -26,7 +26,7 @@ int efetuar_login(char *cpf, char *senha) {
         if (strcmp(usuarios[i].cpf, cpf) == 0 && strcmp(usuarios[i].senha, senha) == 0) {
             user_logado = i; // Armazena o índice do usuário logado
             strcpy(senha_usuario, usuarios[i].senha); // Armazena a senha do usuário logado
-            printf("Login bem-sucedido! Usuário logado: %s (Número: %d)\n", usuarios[user_logado].cpf, user_logado + 1);
+            printf("Login bem-sucedido! Usuario logado: %s (Numero: %d)\n", usuarios[user_logado].cpf, user_logado + 1);
             return 1; // Login bem-sucedido
         }
     }
@@ -44,7 +44,7 @@ int seguranca_user() {
     if (strcmp(senha_input, senha_usuario) == 0) {
         return 1; // Senha correta
     } else {
-        printf("Senha incorreta. Operação cancelada.\n");
+        printf("Senha incorreta. Operacao cancelada.\n");
         return 0; // Senha incorreta
     }
 }
@@ -78,7 +78,7 @@ void consultar_saldo() {
         sprintf(user_file, "user%d.bin", user_logado + 1); // Ex: user1.bin
         FILE *file_user = fopen(user_file, "rb");
         if (file_user == NULL) {
-            perror("Erro ao abrir o arquivo do usuário");
+            perror("Erro ao abrir o arquivo do usuario");
             return;
         }
 
@@ -94,7 +94,7 @@ void consultar_saldo() {
         }
         fclose(file_user);
     } else {
-        printf("Nenhum usuário logado.\n");
+        printf("Nenhum usuario logado.\n");
     }
 }
 
@@ -130,7 +130,7 @@ void consultar_extrato() {
                    transacoes[i].data, transacoes[i].valor, transacoes[i].taxa);
         }
     } else {
-        printf("Nenhum usuário logado.\n");
+        printf("Nenhum usuario logado.\n");
     }
 }
 
@@ -145,7 +145,7 @@ void depositar() {
         // Abrindo o arquivo do usuário para leitura
         FILE *file_user = fopen(user_file, "rb+"); // rb+ para leitura e escrita
         if (file_user == NULL) {
-            perror("Erro ao abrir o arquivo do usuário");
+            perror("Erro ao abrir o arquivo do usuario");
             return;
         }
 
@@ -159,7 +159,7 @@ void depositar() {
         scanf("%f", &valor_deposito);
 
         // Confirmação do depósito
-        printf("Você deseja depositar R$ %.2f? (s/n): ", valor_deposito);
+        printf("Voce deseja depositar R$ %.2f? (s/n): ", valor_deposito);
         char confirmacao;
         scanf(" %c", &confirmacao); // O espaço antes de %c ignora espaços em branco
 
@@ -171,14 +171,14 @@ void depositar() {
             fseek(file_user, 0, SEEK_SET);
             fwrite(&saldo_atual, sizeof(float), 1, file_user);
 
-            printf("Depósito de R$ %.2f realizado com sucesso! Novo saldo: R$ %.2f\n", valor_deposito, saldo_atual);
+            printf("Deposito de R$ %.2f realizado com sucesso! Novo saldo: R$ %.2f\n", valor_deposito, saldo_atual);
         } else {
-            printf("Depósito cancelado.\n");
+            printf("Deposito cancelado.\n");
         }
 
         fclose(file_user);
     } else {
-        printf("Nenhum usuário logado.\n");
+        printf("Nenhum usuario logado.\n");
     }
 }
 
@@ -193,7 +193,7 @@ void sacar() {
         // Abrindo o arquivo do usuário para leitura e escrita
         FILE *file_user = fopen(user_file, "rb+"); // rb+ para leitura e escrita
         if (file_user == NULL) {
-            perror("Erro ao abrir o arquivo do usuário");
+            perror("Erro ao abrir o arquivo do usuario");
             return;
         }
 
@@ -208,10 +208,10 @@ void sacar() {
 
         // Verifica se o saldo é suficiente
         if (valor_saque > saldo_atual) {
-            printf("Saldo insuficiente. Seu saldo atual é R$ %.2f.\n", saldo_atual);
+            printf("Saldo insuficiente. Seu saldo atual e R$ %.2f.\n", saldo_atual);
         } else {
             // Confirmação do saque
-            printf("Você deseja sacar R$ %.2f? (s/n): ", valor_saque);
+            printf("Voca deseja sacar R$ %.2f? (s/n): ", valor_saque);
             char confirmacao;
             scanf(" %c", &confirmacao); // O espaço antes de %c ignora espaços em branco
 
@@ -231,7 +231,7 @@ void sacar() {
 
         fclose(file_user);
     } else {
-        printf("Nenhum usuário logado.\n");
+        printf("Nenhum usuario logado.\n");
     }
 }
 
@@ -506,7 +506,7 @@ void menu_principal() {
     int opcao;
     do {
         printf("\nMenu Principal:\n");
-        printf("Operações disponíveis:\n");
+        printf("Operações disponiveis:\n");
         printf("1. Consultar Saldo\n");
         printf("2. Consultar Extrato\n");
         printf("3. Depositar Reais\n");
@@ -515,7 +515,7 @@ void menu_principal() {
         printf("6. Vender Criptomoedas \n");
         printf("7. Atualizar Cotacoes \n");
         printf("0. Sair\n");
-        printf("Escolha uma opção: ");
+        printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
