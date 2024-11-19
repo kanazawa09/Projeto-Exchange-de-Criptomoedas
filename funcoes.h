@@ -31,10 +31,10 @@ typedef struct {
     float taxa;             // Taxa da transação
 } Transacao;
 
-
-// Variável global para armazenar a senha do usuário logado
-char senha_usuario[SENHA_LENGTH];
-
+typedef struct {
+    char cpf[12]; // CPF com 11 dígitos + terminador
+    char senha[5]; // Senha com 4 dígitos + terminador
+} Admin;
 
 // Funções do investido
 void login_user();
@@ -50,7 +50,15 @@ void atualizar_cotacao();
 void menu_principal();
 
 //Funcoes do admin
-
+void interface_login();
+int login_admin(char *cpf, char *senha);
+void add_user();
+void remov_user();
+void add_cripto();
+void remov_cripto();
+void consultar_saldo_admin();
+void consultar_extrato_admin();
+void menu_admin();
 
 
 
