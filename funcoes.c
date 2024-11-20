@@ -593,21 +593,22 @@
     }
 
     int login_admin(char *cpf, char *senha) {
-        Admin admin;
-        FILE *file = fopen("admin_login_info.bin", "rb");
-        if (file == NULL) {
-            perror("Erro ao abrir o arquivo de login");
-            return 0; // Falha ao abrir o arquivo
-        }
-
-        while (fread(&admin, sizeof(Admin), 1, file)) {
-            if (strcmp(admin.cpf, cpf) == 0 && strcmp(admin.senha, senha) == 0) {
-                fclose(file);
+        // Definindo um array de administradores com CPF e senha
+        Admin admins[] = {
+            {"12345678901", "1234"}, // Admin 1
+            {"98765432100", "5678"}, // Admin 2
+            {"11122233344", "9012"}  // Admin 3
+        };
+    
+        int num_admins = sizeof(admins) / sizeof(admins[0]);
+    
+        // Comparar CPF e senha com os administradores definidos
+        for (int i = 0; i < num_admins; i++) {
+            if (strcmp(admins[i].cpf, cpf) == 0 && strcmp(admins[i].senha, senha) == 0) {
                 return 1; // Login bem-sucedido
             }
         }
-
-        fclose(file);
+    
         return 0; // Login falhou
     }
 
